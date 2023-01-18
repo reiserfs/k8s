@@ -96,4 +96,3 @@ kubeadm join MASTER_IP:PORT --token TOKEN  --discovery-token-ca-cert-hash sha256
 
 
 #join output
-kubeadm join 192.168.87.10:6443 --token ftxsjl.eu8xynikzomt40ce --discovery-token-ca-cert-hash sha256:2b421b8f13f49ddcce45124c80bb8fb11b973facbf14bf0ef7bb8d29f25402ef
