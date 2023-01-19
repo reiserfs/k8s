@@ -1,3 +1,3 @@
 # k8s
 
-files used in k8s training 
+Set up a K8s cluster using Terraform and Ansible
