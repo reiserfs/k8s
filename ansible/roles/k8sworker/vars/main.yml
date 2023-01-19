@@ -1,0 +1,9 @@
+---
+# vars file for k8sworkers
+docker_packages:
+  - docker-ce
+  - iproute-tc 
+k8s_packages:
+  - kubelet
+  - kubeadm
+  - kubectl

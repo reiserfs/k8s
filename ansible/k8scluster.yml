@@ -1,0 +1,11 @@
+- hosts: master
+  name: Deploy K8s master node 
+  become: yes
+  roles:
+    - k8smaster 
+
+- hosts: workers 
+  name: Deploy K8s workers node 
+  become: yes
+  roles:
+    - k8sworker

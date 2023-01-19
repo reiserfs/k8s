@@ -1,0 +1,99 @@
+---
+# tasks file for k8smaster
+- name: Update all installed packages using YUM module
+  yum:
+    name: '*'
+    state: latest
+    update_cache: yes
+    update_only: yes
+  register: yum_update_status
+
+- name: Add docker repository 
+  shell:
+    cmd: | 
+      dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Add k8s repository
+  shell: 
+    cmd: |
+      cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      exclude=kubelet kubeadm kubectl
+      EOF
+
+- name: Disable swap
+  shell: 
+    cmd: |
+      swapoff -a
+      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+      setenforce 0
+      sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+- name: install docker packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{  docker_packages }}"
+
+- name: Install k8s packages - kubelet kubeadm kubectl
+  yum:
+    name: "{kubelet,kubeadm,kubectl}" 
+  vars:
+    packages:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: latest
+    disable_excludes: repoid
+    disablerepo: kubernetes
+    become: yes
+    become_user: root
+
+- name: Setup containerd 
+  shell: 
+    cmd: |
+      containerd config default > /etc/containerd/config.toml
+      sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+  notify: start containderd service 
+
+- name: Add netfilter module 
+  modprobe:
+    name: br_netfilter 
+    state: present
+
+- name: Enable IP Forward
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+     
+- name: Kubeadm init
+  shell: kubeadm init --pod-network-cidr=192.168.0.0/16 
+  ignore_errors: True  
+  notify: start kubelet service 
+  
+- name: create kube root config dir 
+  file:
+    name: /root/.kube
+    state: directory
+
+- name: Copy k8s config for root 
+  copy:
+    src: /etc/kubernetes/admin.conf 
+    dest: /root/.kube/config
+    remote_src: true 
+
+- name: Kubeadm apply network plugin calico 
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml 
+
+- name: Generate Token for workers
+  shell: kubeadm token create --print-join-command
+  register: join_command 

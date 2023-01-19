@@ -1,0 +1,4 @@
+---
+# defaults file for k8smaster
+k8s_test: This is a test message
+k8s_port: 80

@@ -1,0 +1,5 @@
+---
+# vars file for k8smaster
+docker_packages:
+  - docker-ce
+  - iproute-tc 
