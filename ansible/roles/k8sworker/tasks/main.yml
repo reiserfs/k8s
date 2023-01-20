@@ -1,14 +1,6 @@
 ---
 # tasks file for k8sworkers
 
-- name: Generate Token for workers
-  shell: kubeadm token create --print-join-command
-  register: join_command 
-  delegate_to: master
-
-- debug: 
-    msg: "{{ join_command }}"    
-
 - name: Update all installed packages using YUM module
   yum:
     name: '*'
@@ -79,5 +71,13 @@
     state: present
     reload: yes
      
+- name: Generate Token for workers
+  shell: kubeadm token create --print-join-command
+  register: join_command 
+  delegate_to: "{{ master }}" 
+
+- debug: 
+    msg: "{{ join_command }}"    
+
 - name: Join cluster 
   shell: "{{ join_command.stdout }}" 
