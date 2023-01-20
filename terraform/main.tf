@@ -4,5 +4,3 @@ provider "google" {
   zone    = "europe-west9-a"
   credentials = file("gcloud.json")
 }
-
-

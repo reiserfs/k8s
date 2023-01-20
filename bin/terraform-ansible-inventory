@@ -1,0 +1,26 @@
+#!/usr/bin/python3
+# Create Ansible inventory using json output from Terraform state
+# Thiago Melo - 2023
+#
+import json
+import sys
+from configparser import ConfigParser
+
+inventory = ConfigParser()
+
+print(f"Name of the script      : {sys.argv[0]=}")
+print(f"Arguments of the script : {sys.argv[1:]=}")
+with open(sys.argv[1], "r") as f:
+    data = json.load(f)
+
+for i in data['values']['root_module']['resources']:
+    if i['type'] == "google_compute_instance":
+        print(i['name'])
+        print(i['values']['name'])
+        print(i['values']['network_interface'][0]['access_config'][0]['nat_ip'])
+        if not inventory.has_section(i['name']):
+            inventory.add_section(i['name'])
+        inventory.set(i['name'], i['values']['name'] + ' ' + 'ansible_host', i['values']['network_interface'][0]['access_config'][0]['nat_ip'])
+
+with open('test_update.ini', 'w') as configfile:
+    inventory.write(configfile, space_around_delimiters=False)
