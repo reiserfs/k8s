@@ -8,13 +8,13 @@
     update_only: yes
   register: yum_update_status
 
-- name: Add docker repository 
+- name: Add docker repository
   shell:
-    cmd: | 
+    cmd: |
       dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
 
 - name: Add k8s repository
-  shell: 
+  shell:
     cmd: |
       cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
       [kubernetes]
@@ -28,7 +28,7 @@
       EOF
 
 - name: Disable swap
-  shell: 
+  shell:
     cmd: |
       swapoff -a
       sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
@@ -44,22 +44,28 @@
 - name: Install k8s packages - kubelet kubeadm kubectl
   shell: dnf install -y {kubelet,kubeadm,kubectl} --disableexcludes=kubernetes
 
-- name: Setup containerd 
-  shell: 
+- name: Setup containerd
+  shell:
     cmd: |
       containerd config default > /etc/containerd/config.toml
       sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
-- name: start containerd 
+- name: start containerd
   service:
-    name: containerd 
-    state: started 
+    name: containerd
+    state: started
     enabled: yes
 
-- name: Add netfilter module 
+- name: Add netfilter module
   modprobe:
-    name: br_netfilter 
+    name: br_netfilter
     state: present
+
+- name: Creating a file with content
+  copy:
+    dest: "/etc/modprobe.d/br_netfilter.conf"
+    content: |
+      br_netfilter
 
 - name: Enable IP Forward
   sysctl:
@@ -68,28 +74,28 @@
     sysctl_set: yes
     state: present
     reload: yes
-     
+
 - name: Kubeadm init
-  shell: kubeadm init --pod-network-cidr=192.168.0.0/16 
-  ignore_errors: True  
+  shell: kubeadm init --pod-network-cidr=10.87.0.0/16
+  ignore_errors: True
 
 - name: start kubelet service
   service:
-    name: kubelet 
-    state: started 
+    name: kubelet
+    state: started
     enabled: yes
 
-  
-- name: create kube root config dir 
+
+- name: create kube root config dir
   file:
     name: /root/.kube
     state: directory
 
-- name: Copy k8s config for root 
+- name: Copy k8s config for root
   copy:
-    src: /etc/kubernetes/admin.conf 
+    src: /etc/kubernetes/admin.conf
     dest: /root/.kube/config
-    remote_src: true 
+    remote_src: true
 
-- name: Kubeadm apply network plugin calico 
-  shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml 
+- name: Kubeadm apply network plugin calico
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
