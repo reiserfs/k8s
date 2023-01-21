@@ -1,3 +1,8 @@
+# Create a master VM and X workers VM for a K8s cluster
+# Thiago Melo - 2022
+# https://github.com/reiserfs/k8s
+#
+
 #gcloud config set project k8s-training-375110
 #gcloud config set compute/zone europe-west9-a
 #gcloud compute networks create k8s-cluster --subnet-mode custom
@@ -16,6 +21,29 @@ resource "google_compute_subnetwork" "k8s-nodes" {
   network       = "k8s-cluster"
 }
 
+output "public_ip" {
+  value = google_compute_instance.master.network_interface[0].access_config[0].nat_ip
+}
+
+resource "null_resource" "ansible_run" {
+  provisioner "remote-exec" {
+    inline = ["sudo yum -y update", "echo Done!"]
+    connection {
+      host        = google_compute_instance.master.network_interface[0].access_config[0].nat_ip
+      type        = "ssh"
+      user        = "${var.ssh_username}"
+      #private_key = file(var.pvt_key)
+    }
+  }
+
+  provisioner "local-exec" {
+    command = "terraform-ansible-inventory --file terraform.tfstate"
+  }
+
+  provisioner "local-exec" {
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -v ../ansible/k8scluster.yml"
+  }
+}
 resource "google_compute_instance" "master" {
   name         = "k8s-master"
   machine_type = "${var.machine}"
@@ -50,7 +78,7 @@ resource "google_compute_instance" "workers" {
   machine_type = "${var.machine}"
   zone = "europe-west9-a"
   allow_stopping_for_update = true
-  count = 3
+  count = var.workers
 
   tags = ["k8s-cluster","master-node","controller"]
 

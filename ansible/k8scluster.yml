@@ -1,11 +1,16 @@
+# Deploy the custer on the master and nodes
+# Thiago Melo - 2022
+# https://github.com/reiserfs/k8s
+#
+
 - hosts: master
-  name: Deploy K8s master node 
+  name: Deploy K8s master node
   become: yes
   roles:
-    - k8smaster 
+    - k8smaster
 
-- hosts: workers 
-  name: Deploy K8s workers node 
+- hosts: workers
+  name: Deploy K8s workers node
   become: yes
   strategy: free
   roles:

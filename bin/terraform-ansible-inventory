@@ -1,26 +1,36 @@
 #!/usr/bin/python3
-# Create Ansible inventory using json output from Terraform state
-# Thiago Melo - 2023
+# Create a inventory file based on json output of Terraform tfstate
+# Thiago Melo - 2022
+# https://github.com/reiserfs/k8s
+# Usage: terraform-ansible-inventory --file terraform.tfstate --output=true
 #
 import json
-import sys
+import os
 from configparser import ConfigParser
+import argparse
+
+ansible_inventory='../ansible/inventory'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--file', help='file help')
+parser.add_argument('--output', default="false", help='output')
+args = parser.parse_args()
 
 inventory = ConfigParser()
 
-print(f"Name of the script      : {sys.argv[0]=}")
-print(f"Arguments of the script : {sys.argv[1:]=}")
-with open(sys.argv[1], "r") as f:
+os.system('terraform show -json ' + args.file + '| jq > jq.json')
+
+with open('jq.json', "r") as f:
     data = json.load(f)
 
 for i in data['values']['root_module']['resources']:
     if i['type'] == "google_compute_instance":
-        print(i['name'])
-        print(i['values']['name'])
-        print(i['values']['network_interface'][0]['access_config'][0]['nat_ip'])
         if not inventory.has_section(i['name']):
             inventory.add_section(i['name'])
         inventory.set(i['name'], i['values']['name'] + ' ' + 'ansible_host', i['values']['network_interface'][0]['access_config'][0]['nat_ip'])
 
-with open('test_update.ini', 'w') as configfile:
+with open(ansible_inventory, 'w') as configfile:
     inventory.write(configfile, space_around_delimiters=False)
+
+if args.output=='true':
+    print(open(ansible_inventory, "r").read())
