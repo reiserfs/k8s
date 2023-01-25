@@ -19,6 +19,9 @@ resource "google_compute_subnetwork" "k8s-nodes" {
   name         = "k8s-nodes"
   ip_cidr_range = "${var.subnet}"
   network       = "k8s-cluster"
+  depends_on = [
+    google_compute_network.k8s-cluster
+  ]
 }
 
 output "public_ip" {
@@ -71,6 +74,9 @@ resource "google_compute_instance" "master" {
   service_account {
     scopes = ["compute-rw","storage-ro","service-management","service-control","logging-write","monitoring"]
   }
+  depends_on = [
+    google_compute_subnetwork.k8s-nodes
+  ]
 }
 
 resource "google_compute_instance" "workers" {
@@ -102,6 +108,9 @@ resource "google_compute_instance" "workers" {
   service_account {
     scopes = ["compute-rw","storage-ro","service-management","service-control","logging-write","monitoring"]
   }
+  depends_on = [
+    google_compute_subnetwork.k8s-nodes
+  ]
 }
 
 resource "google_compute_firewall" "k8s-cluster-allow-internal" {
@@ -111,6 +120,9 @@ resource "google_compute_firewall" "k8s-cluster-allow-internal" {
   allow {
     protocol = "all"
   }
+  depends_on = [
+    google_compute_network.k8s-cluster
+  ]
 }
 
 resource "google_compute_firewall" "k8s-cluster-allow-external" {
@@ -125,4 +137,7 @@ resource "google_compute_firewall" "k8s-cluster-allow-external" {
     protocol = "tcp"
     ports    = ["22", "6443"]
   }
+  depends_on = [
+    google_compute_network.k8s-cluster
+  ]
 }
