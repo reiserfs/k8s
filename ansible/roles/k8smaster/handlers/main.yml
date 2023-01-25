@@ -1,3 +1,7 @@
 ---
 # handlers file for k8smaster
 
+- name: Restart kubelet
+  service:
+    name: kubelet
+    state: restarted

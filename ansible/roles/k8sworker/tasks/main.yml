@@ -1,6 +1,5 @@
 ---
 # tasks file for k8sworkers
-
 - name: Update all installed packages using YUM module
   yum:
     name: '*'
@@ -67,7 +66,7 @@
   copy:
     dest: "/etc/modprobe.d/br_netfilter.conf"
     content: |
-      br_netfilter    
+      br_netfilter
 
 - name: Enable IP Forward
   sysctl:
@@ -77,19 +76,14 @@
     state: present
     reload: yes
 
-- name: start kubelet service
-  service:
-    name: kubelet
-    state: stoped
-    enabled: yes
-
 - name: Generate Token for workers
   shell: kubeadm token create --print-join-command
   register: join_command
-  delegate_to: "{{ master }}"
+  delegate_to: "{{ groups['master'][0] }}"
 
 - debug:
     msg: "{{ join_command }}"
 
 - name: Join cluster
   shell: "{{ join_command.stdout }}"
+  ignore_errors: True

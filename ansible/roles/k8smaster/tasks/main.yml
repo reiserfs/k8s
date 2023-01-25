@@ -99,3 +99,5 @@
 
 - name: Kubeadm apply network plugin calico
   shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  notify:
+  - Restart kubelet
