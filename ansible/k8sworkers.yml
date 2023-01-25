@@ -1,0 +1,6 @@
+- hosts: workers 
+  name: Deploy K8s workers node 
+  become: yes
+  strategy: free
+  roles:
+    - k8sworker
