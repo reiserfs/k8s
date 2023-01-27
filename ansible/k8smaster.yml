@@ -1,6 +1,6 @@
 - hosts: master 
-  name: Deploy K8s master node 
+  name: Deploy K8s master node
   become: yes
 
   roles:
-    - k8smaster 
+    - k8smaster
