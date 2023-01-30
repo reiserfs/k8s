@@ -28,7 +28,10 @@ for i in data['values']['root_module']['resources']:
         if not inventory.has_section(i['name']):
             inventory.add_section(i['name'])
         inventory.set(i['name'], i['values']['name'] + ' ' + 'ansible_host', i['values']['network_interface'][0]['access_config'][0]['nat_ip'])
-
+    if i['type'] == "oci_core_instance":
+        if not inventory.has_section(i['name']):
+            inventory.add_section(i['name'])
+        inventory.set(i['name'], i['values']['display_name'] + ' ' + 'ansible_host', i['values']['public_ip'])
 with open(ansible_inventory, 'w') as configfile:
     inventory.write(configfile, space_around_delimiters=False)
 

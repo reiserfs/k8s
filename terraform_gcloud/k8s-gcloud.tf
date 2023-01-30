@@ -3,50 +3,6 @@
 # https://github.com/reiserfs/k8s
 #
 
-#gcloud config set project k8s-training-375110
-#gcloud config set compute/zone europe-west9-a
-#gcloud compute networks create k8s-cluster --subnet-mode custom
-#gcloud compute networks subnets create k8s-nodes --network k8s-cluster --range 192.168.87.0/24
-#gcloud compute firewall-rules create k8s-cluster-allow-internal --allow tcp,udp,icmp,ipip --network k8s-cluster --source-ranges 192.168.87.0/24
-#gcloud compute firewall-rules create k8s-cluster-allow-external --allow tcp:22,tcp:6443,icmp --network k8s-cluster --source-ranges 0.0.0.0/0
-
-resource "google_compute_network" "k8s-cluster" {
-  name         = "k8s-cluster"
-  auto_create_subnetworks = false
-}
-
-resource "google_compute_subnetwork" "k8s-nodes" {
-  name         = "k8s-nodes"
-  ip_cidr_range = "${var.subnet}"
-  network       = "k8s-cluster"
-  depends_on = [
-    google_compute_network.k8s-cluster
-  ]
-}
-
-output "public_ip" {
-  value = google_compute_instance.master.network_interface[0].access_config[0].nat_ip
-}
-
-resource "null_resource" "ansible_run" {
-  provisioner "remote-exec" {
-    inline = ["sudo yum -y update", "echo Done!"]
-    connection {
-      host        = google_compute_instance.master.network_interface[0].access_config[0].nat_ip
-      type        = "ssh"
-      user        = "${var.ssh_username}"
-      #private_key = file(var.pvt_key)
-    }
-  }
-
-  provisioner "local-exec" {
-    command = "terraform-ansible-inventory --file terraform.tfstate"
-  }
-
-  provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -v ../ansible/k8scluster.yml"
-  }
-}
 resource "google_compute_instance" "master" {
   name         = "k8s-master"
   machine_type = "${var.machine}"
@@ -68,7 +24,7 @@ resource "google_compute_instance" "master" {
   }
 
   metadata = {
-    ssh-keys = "thiago:${file("thiago.pub")}"
+    ssh-keys = "thiago:${file("../thiago.pub")}"
   }
 
   service_account {
@@ -102,7 +58,7 @@ resource "google_compute_instance" "workers" {
   }
 
   metadata = {
-    ssh-keys = "thiago:${file("thiago.pub")}"
+    ssh-keys = "thiago:${file("../thiago.pub")}"
   }
 
   service_account {
@@ -110,34 +66,5 @@ resource "google_compute_instance" "workers" {
   }
   depends_on = [
     google_compute_subnetwork.k8s-nodes
-  ]
-}
-
-resource "google_compute_firewall" "k8s-cluster-allow-internal" {
-  name         = "k8s-cluster-allow-internal"
-  source_ranges = ["${var.subnet}"]
-  network       = "k8s-cluster"
-  allow {
-    protocol = "all"
-  }
-  depends_on = [
-    google_compute_network.k8s-cluster
-  ]
-}
-
-resource "google_compute_firewall" "k8s-cluster-allow-external" {
-  name         = "k8s-cluster-allow-external"
-  source_ranges = ["0.0.0.0/0"]
-  network       = "k8s-cluster"
-  allow {
-    protocol = "icmp"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22", "6443"]
-  }
-  depends_on = [
-    google_compute_network.k8s-cluster
   ]
 }
