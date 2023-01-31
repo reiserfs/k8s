@@ -1,8 +1,8 @@
 # k8s
-# Create a master VM and X workers VM for a K8s cluster
-# Thiago Melo - 2022
-# https://github.com/reiserfs/k8s
-#
+## Create a master VM and X workers VM for a K8s cluster
+- Thiago Melo - 2022
+- https://github.com/reiserfs/k8s
+
 
 Set up a K8s cluster using Terraform and Ansible
 
