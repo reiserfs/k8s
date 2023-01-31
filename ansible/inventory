@@ -1,8 +1,6 @@
 [master]
-k8s-master ansible_host=34.163.50.202
+k8s-master ansible_host=20.250.19.15
 
 [workers]
-k8s-worker0 ansible_host=34.155.232.198
-k8s-worker1 ansible_host=34.155.136.244
-k8s-worker2 ansible_host=34.155.16.241
+k8s-worker0 ansible_host=20.250.19.17
 
