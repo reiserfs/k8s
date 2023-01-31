@@ -1,5 +1,5 @@
-# k8s
-## Create a master VM and X workers VM for a K8s cluster
+# K8s
+## Create a K8s cluster with a master and X workers using cloud computers on gcloud, oci, azure and aws
 - Thiago Melo - 2022
 - https://github.com/reiserfs/k8s
 
