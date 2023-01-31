@@ -7,27 +7,32 @@ variable "prefix_netip" {
   default = "192.168.87"
 }
 
+variable "cidr_block" {
+  type        = list(string)
+  default = ["192.168.0.0/16"]
+}
+
 variable "subnet" {
-  type = string
-  default = "192.168.87.0/24"
+  type = list(string)
+  default = ["192.168.87.0/24"]
 }
 
 variable "cluster_zone" {
   type    = string
-  default = "europe-west9-a"
+  default = "switzerlandnorth"
 }
 
-variable "machine" {
+variable "resource_group" {
   type    = string
-  default = "e2-medium"
+  default = "k8s"
 }
 
-variable "ssh_username" {
+variable "machine_type" {
   type    = string
-  default = "thiago"
+  default = "Standard_B2s"
 }
 
 variable "workers" {
   type    = number
-  default = 3
+  default = 1
 }

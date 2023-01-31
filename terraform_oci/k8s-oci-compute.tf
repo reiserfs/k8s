@@ -1,3 +1,7 @@
+# Create a master VM and X workers VM for a K8s cluster
+# Thiago Melo - 2022
+# https://github.com/reiserfs/k8s
+#
 resource "oci_core_instance" "master" {
   availability_domain = "SjFx:EU-MADRID-1-AD-1"
   compartment_id = var.compartment_id

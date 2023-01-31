@@ -2,23 +2,27 @@
 # Create a inventory file based on json output of Terraform tfstate
 # Thiago Melo - 2022
 # https://github.com/reiserfs/k8s
-# Usage: terraform-ansible-inventory --file terraform.tfstate --output=true
+# Usage: terraform-ansible-inventory --input terraform.tfstate --output ../ansible/inventory
+# Works for Google Cloud, Oracle Cloud, Microsoft Azure, Amazon AWS(TBA)
 #
 import json
 import os
 from configparser import ConfigParser
 import argparse
 
-ansible_inventory='../ansible/inventory'
+ansible_inventory='inventory'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--file', help='file help')
-parser.add_argument('--output', default="false", help='output')
+parser.add_argument('--input', help='input help')
+parser.add_argument('--output', help='output help')
+parser.add_argument('--verbose', default="false", help='verbose TRUE')
 args = parser.parse_args()
 
 inventory = ConfigParser()
+if args.output:
+    ansible_inventory=args.output
 
-os.system('terraform show -json ' + args.file + '| jq > jq.json')
+os.system('terraform show -json ' + args.input + '| jq > jq.json')
 
 with open('jq.json', "r") as f:
     data = json.load(f)
@@ -32,8 +36,12 @@ for i in data['values']['root_module']['resources']:
         if not inventory.has_section(i['name']):
             inventory.add_section(i['name'])
         inventory.set(i['name'], i['values']['display_name'] + ' ' + 'ansible_host', i['values']['public_ip'])
+    if i['type'] == "azurerm_linux_virtual_machine":
+        if not inventory.has_section(i['name']):
+            inventory.add_section(i['name'])
+        inventory.set(i['name'], i['values']['name'] + ' ' + 'ansible_host', i['values']['public_ip_address'])
 with open(ansible_inventory, 'w') as configfile:
     inventory.write(configfile, space_around_delimiters=False)
 
-if args.output=='true':
+if args.verbose=='true':
     print(open(ansible_inventory, "r").read())

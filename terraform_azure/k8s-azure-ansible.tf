@@ -6,9 +6,9 @@ resource "null_resource" "ansible_run" {
   provisioner "remote-exec" {
     inline = ["sudo yum -y update", "echo Done!"]
     connection {
-      host        = oci_core_instance.master.public_ip
+      host        = azurerm_linux_virtual_machine.master.public_ip_address
       type        = "ssh"
-      user        = "${var.ssh_username}"
+      user        = "thiago"
       #private_key = file(var.pvt_key)
     }
   }
@@ -18,12 +18,8 @@ resource "null_resource" "ansible_run" {
   }
 
   provisioner "local-exec" {
-    command = "terraform-ansible-inventory --file terraform.tfstate"
+    command = "terraform-ansible-inventory --input terraform.tfstate --output ../ansible/inventory"
   }
-
-   provisioner "local-exec" {
-     command = "cat oci-ansible-inventory-user >>  ../ansible/inventory"
-   }
 
   provisioner "local-exec" {
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -v ../ansible/k8scluster.yml"

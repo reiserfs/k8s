@@ -1,3 +1,7 @@
+# Create a master VM and X workers VM for a K8s cluster
+# Thiago Melo - 2022
+# https://github.com/reiserfs/k8s
+#
 resource "oci_core_vcn" "k8s_cluster" {
     compartment_id = var.compartment_id
     cidr_block = var.cidr_block
