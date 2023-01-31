@@ -87,3 +87,20 @@
 - name: Join cluster
   shell: "{{ join_command.stdout }}"
   ignore_errors: True
+
+- name: start kubelet service
+  service:
+    name: kubelet
+    state: started
+    enabled: yes
+
+- name: FirewallD rules
+  firewalld:
+    permanent: yes
+    immediate: yes
+    port: "{{item.port}}/{{item.proto}}"
+    state: "{{item.state}}"
+    zone: "{{item.zone}}"
+  with_items:
+   - {port: "10250", proto: "tcp", state: "enabled", zone: "public" }
+   - {port: "30000-32767", proto: "tcp", state: "enabled", zone: "public" }

@@ -75,16 +75,21 @@
     state: present
     reload: yes
 
+- name: Test k8s cluster
+  shell: kubectl get node {{ groups['master'][0] }}
+  ignore_errors: True
+  register: kubeadm_init
+
 - name: Kubeadm init
   shell: kubeadm init --pod-network-cidr=10.87.0.0/16
   ignore_errors: True
+  when: kubeadm_init.stderr != ""
 
 - name: start kubelet service
   service:
     name: kubelet
     state: started
     enabled: yes
-
 
 - name: create kube root config dir
   file:
@@ -101,3 +106,17 @@
   shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
   notify:
   - Restart kubelet
+
+- name: FirewallD rules
+  firewalld:
+    permanent: yes
+    immediate: yes
+    port: "{{item.port}}/{{item.proto}}"
+    state: "{{item.state}}"
+    zone: "{{item.zone}}"
+  with_items:
+   - {port: "6443", proto: "tcp", state: "enabled", zone: "public" }
+   - {port: "2379-2380", proto: "tcp", state: "enabled", zone: "public" }
+   - {port: "10250", proto: "tcp", state: "enabled", zone: "public" }
+   - {port: "10259", proto: "tcp", state: "enabled", zone: "public" }
+   - {port: "10257", proto: "tcp", state: "enabled", zone: "public" }
